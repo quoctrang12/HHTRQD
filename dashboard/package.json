@@ -1,0 +1,10 @@
+{
+  "name": "atlas-khi-tuong-vn",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dashboard HTRQD — 3 task Munzner, dữ liệu khí tượng 63 tỉnh",
+  "scripts": {
+    "start": "node serve.js",
+    "prepare-data": "node ../scripts/prepare-data.js"
+  }
+}

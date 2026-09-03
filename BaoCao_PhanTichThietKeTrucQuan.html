@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Báo cáo phân tích và thiết kế trực quan — Atlas khí tượng Việt Nam</title>
+  <style>
+    @page { size: A4; margin: 22mm 18mm; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 13pt;
+      line-height: 1.45;
+      color: #1b1b1b;
+      max-width: 860px;
+      margin: 24px auto 64px;
+      padding: 0 20px;
+    }
+    h1, h2, h3 { font-family: "Times New Roman", Times, serif; }
+    h1 { font-size: 20pt; text-align: center; margin-bottom: 6px; }
+    h2 { font-size: 14.5pt; margin-top: 26px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+    h3 { font-size: 13pt; margin-top: 16px; }
+    .cover { text-align: center; margin: 12px 0 28px; }
+    .cover p { margin: 4px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 12pt; }
+    th, td { border: 1px solid #444; padding: 6px 8px; vertical-align: top; }
+    th { background: #f3f3f3; }
+    .fig { font-style: italic; font-size: 11.5pt; text-align: center; margin: 8px 0 16px; }
+    a { color: #0b4f6c; }
+    ul, ol { margin-top: 6px; }
+    .muted { color: #444; }
+    code { font-family: Consolas, "Courier New", monospace; font-size: 11.5pt; }
+  </style>
+</head>
+<body>
+  <div class="cover">
+    <p>HỌC VIỆN / CHƯƠNG TRÌNH SAU ĐẠI HỌC</p>
+    <p><strong>Môn: Hình thức / Trực quan hóa dữ liệu (HTRQD)</strong></p>
+    <h1>BÁO CÁO PHÂN TÍCH VÀ THIẾT KẾ TRỰC QUAN</h1>
+    <p><em>Dashboard khí tượng 63 tỉnh Việt Nam (21/04/2024 – 04/06/2025)</em></p>
+    <p>Áp dụng mô hình lồng nhau của Munzner: domain · data/task abstraction · idiom · evaluation</p>
+  </div>
+
+  <h2>Thông tin nhóm</h2>
+  <table>
+    <tr><th>Mã học viên</th><th>Họ và tên</th><th>Task trừu tượng (slide lý thuyết)</th><th>Idiom chính</th></tr>
+    <tr>
+      <td>25C12012</td>
+      <td>Nguyễn Quốc Trạng</td>
+      <td><strong>Discover distribution</strong></td>
+      <td>Bivariate proportional symbol map + histogram</td>
+    </tr>
+    <tr>
+      <td>25C12038</td>
+      <td>Trương Thị Ngọc Viên</td>
+      <td><strong>Compare trends</strong></td>
+      <td>Aligned line chart (7-day MA) + heatmap</td>
+    </tr>
+    <tr>
+      <td>25C12039</td>
+      <td>Phạm Quốc Vương</td>
+      <td><strong>Locate outliers</strong></td>
+      <td>Scatterplot + boxplot (IQR fences)</td>
+    </tr>
+  </table>
+  <p>
+    <strong>Link dashboard:</strong>
+    <a href="http://localhost:5173">http://localhost:5173</a>
+    (chạy local — xem mục 8). Sau khi triển khai public, thay link này bằng URL GitHub Pages / Netlify.
+  </p>
+
+  <h2>1. Domain situation</h2>
+  <p>
+    Người dùng mục tiêu là nhà phân tích khí tượng / quy hoạch và giảng viên–học viên môn trực quan hóa,
+    cần <em>khám phá</em> (discover) chứ không chỉ trình bày số liệu đã biết (present). Câu hỏi miền gồm:
+    tỉnh nào nóng/mưa hơn; mùa mưa lệch pha Bắc–Nam như thế nào; ngày nào là cực đoan.
+    Dữ liệu đầu vào là bảng quan sát ngày tại 63 tỉnh, nguồn WeatherAPI, đã làm sạch UTF-8.
+  </p>
+
+  <h2>2. Data abstraction (What)</h2>
+  <p>
+    Theo Munzner, ta tách “dữ liệu thô của miền” khỏi “cái được đưa vào vis”.
+    Dataset gốc là <strong>table</strong>: mỗi dòng = một item (tỉnh × ngày), mỗi cột = một attribute.
+  </p>
+  <h3>2.1. Items và thuộc tính gốc</h3>
+  <table>
+    <tr><th>Thành phần</th><th>Giá trị</th><th>Kiểu trừu tượng</th></tr>
+    <tr><td>Số item</td><td>26.018 dòng (63 tỉnh × 409 ngày, thiếu 1 ô)</td><td>table items</td></tr>
+    <tr><td>Thời gian</td><td>2024-04-21 → 2025-06-04</td><td>ordered sequential (key)</td></tr>
+    <tr><td>location.name</td><td>63 tỉnh/thành</td><td>categorical key</td></tr>
+    <tr><td>location.region</td><td>6 vùng kinh tế–địa lý</td><td>categorical</td></tr>
+    <tr><td>location.terrain</td><td>đồng bằng, ven biển, miền núi</td><td>categorical</td></tr>
+    <tr><td>lat, lon</td><td>tọa độ tỉnh</td><td>quantitative spatial</td></tr>
+    <tr>
+      <td>day.avgtemp_c, maxtemp_c, mintemp_c</td>
+      <td>TB toàn cục: Tavg 25,1°C; Tmax 29,2°C; cực trị 43,4°C / −0,2°C</td>
+      <td>quantitative sequential</td>
+    </tr>
+    <tr>
+      <td>day.totalprecip_mm</td>
+      <td>TB 6,65 mm/ngày; max 285,2 mm (Quảng Trị, 27/10/2024)</td>
+      <td>quantitative sequential, skewed</td>
+    </tr>
+    <tr><td>day.avghumidity, maxwind_kph, uv</td><td>độ ẩm TB 76,8%</td><td>quantitative sequential</td></tr>
+    <tr><td>day.condition.text</td><td>21 nhãn thời tiết</td><td>categorical</td></tr>
+  </table>
+
+  <h3>2.2. Thuộc tính suy ra (derived) — bước bắt buộc của abstraction</h3>
+  <p>Munzner nhấn mạnh: “don’t just use what you’re given”. Dashboard derive thêm:</p>
+  <ul>
+    <li><strong>Tỉnh-ngày index</strong>: mảng phẳng 63×409 cho tmax, tmin, tavg, precip, humidity, wind.</li>
+    <li><strong>Trung bình theo tỉnh trong khoảng ngày</strong> (item aggregation) — đưa vào bản đồ.</li>
+    <li><strong>Chuỗi ngày theo vùng</strong> và <strong>trung bình trượt 7 ngày</strong> — giảm nhiễu, phục vụ compare trends.</li>
+    <li><strong>Ma trận vùng × tháng</strong> — aggregation hai chiều cho heatmap (summarize).</li>
+    <li><strong>Cờ outlier</strong>: mưa &gt; Q3 + 1,5×IQR; nhiệt |z| ≥ 2,5 trên phân bố đang lọc (không dùng ngưỡng tuyệt đối của miền, để idiom gắn với task locate).</li>
+  </ul>
+  <p class="muted">
+    Availability: dataset tĩnh (static), không phải streaming. Geometry tỉnh không có sẵn dạng polygon trong file gốc,
+    nên vị trí không gian được trừu tượng hóa thành <em>point geometry</em> (lat/lon) chứ không phải area geometry.
+    Đây là lựa chọn abstraction có chủ đích, được đánh giá ở mục 6.
+  </p>
+
+  <h2>3. Task abstraction (Why)</h2>
+  <p>
+    Slide cuối chương Task Abstraction của Munzner đưa các cặp <strong>{action, target}</strong> gốc:
+    discover distribution · compare trends · locate outliers · browse topology.
+    Nhóm chọn ba cặp đầu — phù hợp table + spatial attributes; <em>browse topology</em> dành cho network nên loại.
+  </p>
+  <p>
+    Mỗi task được viết lại theo ba tầng action (Analyze / Search / Query) và target tương ứng.
+  </p>
+
+  <h3>3.1. Task 1 — Nguyễn Quốc Trạng — Discover distribution</h3>
+  <table>
+    <tr><th>Tầng</th><th>Miền (domain)</th><th>Trừu tượng (abstract)</th></tr>
+    <tr>
+      <td>Analyze</td>
+      <td>Khám phá tỉnh nào nóng/mát, mưa nhiều/ít</td>
+      <td><strong>Consume → Discover</strong> (chưa biết trước đáp án)</td>
+    </tr>
+    <tr>
+      <td>Search</td>
+      <td>Không khóa sẵn một tỉnh</td>
+      <td><strong>Explore / Browse</strong> (location unknown, target unknown rồi known khi hover)</td>
+    </tr>
+    <tr>
+      <td>Query</td>
+      <td>Nhìn toàn quốc rồi đọc một tỉnh</td>
+      <td><strong>Summarize</strong> (toàn bộ) rồi <strong>Identify</strong> (một item)</td>
+    </tr>
+    <tr>
+      <td>Target</td>
+      <td>Nóng–lạnh, mưa theo không gian và địa hình</td>
+      <td><strong>Distribution</strong> của một (và hai) quantitative attribute trên spatial field</td>
+    </tr>
+  </table>
+
+  <h3>3.2. Task 2 — Trương Thị Ngọc Viên — Compare trends</h3>
+  <table>
+    <tr><th>Tầng</th><th>Miền</th><th>Trừu tượng</th></tr>
+    <tr><td>Analyze</td><td>Mùa mưa miền Nam vs lạnh mùa đông miền Bắc</td><td><strong>Discover</strong> + hỗ trợ <strong>Present</strong> khi giảng</td></tr>
+    <tr><td>Search</td><td>Đã biết 6 vùng</td><td><strong>Lookup / Browse</strong> (target known: các vùng)</td></tr>
+    <tr><td>Query</td><td>Đối chiếu nhiều vùng, nhiều tháng</td><td><strong>Compare</strong> (some) và <strong>Summarize</strong> (heatmap toàn kỳ)</td></tr>
+    <tr><td>Target</td><td>Pha mùa, đỉnh mưa, hẫng nhiệt</td><td><strong>Trends</strong> của attribute theo ordered time key</td></tr>
+  </table>
+
+  <h3>3.3. Task 3 — Phạm Quốc Vương — Locate outliers</h3>
+  <table>
+    <tr><th>Tầng</th><th>Miền</th><th>Trừu tượng</th></tr>
+    <tr><td>Analyze</td><td>Tìm ngày mưa cực đoan / nắng nóng / rét</td><td><strong>Discover</strong></td></tr>
+    <tr><td>Search</td><td>Không biết trước tỉnh–ngày nào</td><td><strong>Locate</strong> (characteristic known: “lệch phân bố”, position unknown)</td></tr>
+    <tr><td>Query</td><td>Đọc đúng một sự kiện rồi so vài sự kiện</td><td><strong>Identify</strong> rồi <strong>Compare</strong></td></tr>
+    <tr><td>Target</td><td>Đợt lũ, nắng nóng, rét đậm</td><td><strong>Outliers</strong> trên hai attribute (temp, precip) và distribution theo terrain</td></tr>
+  </table>
+
+  <h2>4. Idiom (How)</h2>
+  <p>
+    Idiom = visual encoding (how to draw) + interaction (how to manipulate).
+    Kênh mã hóa được chọn theo thứ tự hiệu lực của Munzner/Mackinlay: position ≫ length/size ≫ color (ordered) ≫ shape.
+  </p>
+
+  <h3>4.1. Task 1 — Bivariate proportional symbol map + histogram</h3>
+  <ul>
+    <li><strong>Marks:</strong> point marks tại lat/lon (expressiveness: spatial data → spatial position).</li>
+    <li><strong>Channels:</strong> color (sequential RdYlBu hoặc Teal) = attribute đang chọn; size = lượng mưa TB; shape = địa hình.</li>
+    <li><strong>Histogram:</strong> item aggregation → đếm tần suất, hỗ trợ summarize distribution mà bản đồ không làm tốt (overplotting vị trí).</li>
+    <li><strong>Vì sao không choropleth:</strong> file không có polygon; area marks sẽ mã hóa sai nếu diện tích tỉnh bị đọc như magnitude. Point marks tránh bias diện tích.</li>
+    <li><strong>Tương tác:</strong> click tỉnh → <em>select / highlight / filter</em> toàn dashboard (linked views).</li>
+  </ul>
+
+  <h3>4.2. Task 2 — Aligned line chart + heatmap</h3>
+  <ul>
+    <li><strong>Line chart:</strong> common-scale aligned axes — idiom chuẩn cho compare trends (position on common scale &gt; stacked area, vì stacked gây ảo giác trend của lớp trên).</li>
+    <li><strong>Derived 7-day MA:</strong> tách signal khỏi noise ngày.</li>
+    <li><strong>Heatmap vùng×tháng:</strong> matrix alignment, color = magnitude; tốt cho summarize toàn kỳ, đổi lại kém hơn line ở đọc slope.</li>
+    <li><strong>Tương tác:</strong> filter vùng/ngày; overlay đường nét đứt khi khóa một tỉnh (derive + superimpose).</li>
+  </ul>
+
+  <h3>4.3. Task 3 — Scatterplot + boxplot + ranked table</h3>
+  <ul>
+    <li><strong>Scatter:</strong> position x = Tavg, y = precip — hai kênh mạnh nhất để thấy correlation và điểm lệch. Màu phân đôi (inlier / outlier) vì target là outliers, không phải scale liên tục.</li>
+    <li><strong>Boxplot:</strong> idiom cổ điển cho distribution + explicit outlier (Wickham &amp; Stryjewski); tách theo terrain vì giả thuyết miền: miền núi khác đồng bằng.</li>
+    <li><strong>Bảng 15 dòng:</strong> identify bằng identity channel (tên, ngày) — vis không thay thế lookup giá trị chính xác.</li>
+    <li><strong>Tương tác:</strong> lasso/box select trên scatter → brush tỉnh trên bản đồ.</li>
+  </ul>
+
+  <h3>4.4. Idiom tương tác tích hợp (điểm bonus)</h3>
+  <p>Ba task không đứng riêng mà dùng <strong>coordinated multiple views</strong>:</p>
+  <ul>
+    <li>Shared filter: khoảng ngày, vùng, địa hình, metric màu.</li>
+    <li>Select on map → filter scatter/histogram/trend (details-on-demand + connect).</li>
+    <li>Brush on scatter → highlight map.</li>
+    <li>Overview-first: KPI + map/heatmap; zoom-and-filter: date/region; details: bảng outlier.</li>
+  </ul>
+  <p>Đây là interaction idiom Shneiderman (overview first, zoom and filter, then details-on-demand) đặt lên nested model của Munzner.</p>
+
+  <h2>5. Algorithm (tầng trong cùng)</h2>
+  <ul>
+    <li>Tiền xử lý Node.js: CSV → JSON đặc (mảng số), heatmap và region series. BOM UTF-8 được strip.</li>
+    <li>Sửa nhãn vùng lỗi <code>Tr [*]ung du và miền núi Bắc Bộ</code>.</li>
+    <li>Vẽ client-side Plotly; scatter dùng WebGL (<code>scattergl</code>) để ~20k điểm không giật.</li>
+    <li>Outlier tính lại theo <em>bộ lọc hiện tại</em> (dynamic derive), không hard-code ngưỡng miền.</li>
+  </ul>
+
+  <h2>6. Đánh giá</h2>
+  <p>
+    Nested model yêu cầu validate đúng tầng. Không dùng timing hệ thống để chứng minh idiom tốt,
+    và không dùng user study lab để chứng minh abstraction đúng.
+  </p>
+
+  <h3>6.1. Tầng domain — qualitative / face validity</h3>
+  <p>
+    Câu hỏi khớp người dùng khí tượng: phân bố không gian, pha mùa, cực đoan.
+    Hạn chế: không phỏng vấn dự báo viên thật (threat: misunderstood needs).
+  </p>
+
+  <h3>6.2. Tầng abstraction — đối chiếu phát hiện với kiến thức miền</h3>
+  <p>Vis “đúng cái cần hiện” nếu tái tạo được các pattern khí hậu Việt Nam đã biết:</p>
+  <ul>
+    <li>Nam Bộ / ĐBSCL ấm hơn (~27,6–27,8°C) so với Trung du miền núi Bắc Bộ (~22,3°C) và Tây Nguyên (~22,8°C).</li>
+    <li>Miền núi mát hơn đồng bằng khoảng 4°C (22,7 vs 26,5) — distribution theo terrain.</li>
+    <li>Nắng nóng sớm: Hòa Bình 43,4°C ngày 28/04/2024.</li>
+    <li>Rét: Hà Giang −0,2°C ngày 12/01/2025.</li>
+    <li>Mưa cực đoan: Quảng Trị 285,2 mm ngày 27/10/2024 — đúng cửa sổ mưa lũ miền Trung.</li>
+  </ul>
+  <p>
+    Các pattern này xuất hiện trên map/histogram (task 1), lệch pha đường/heatmap (task 2),
+    và điểm đỏ + bảng (task 3) → abstraction không “show the wrong thing”.
+  </p>
+
+  <h3>6.3. Tầng idiom — justification so với phương án khác</h3>
+  <table>
+    <tr><th>Task</th><th>Phương án loại</th><th>Lý do loại</th></tr>
+    <tr>
+      <td>Distribution</td>
+      <td>Pie / choropleth diện tích</td>
+      <td>Pie không mã hóa spatial field; choropleth bias diện tích, thiếu polygon sạch</td>
+    </tr>
+    <tr>
+      <td>Trends</td>
+      <td>Stacked area, pie theo tháng</td>
+      <td>Stack làm sai trend lớp trên; pie phá ordered time</td>
+    </tr>
+    <tr>
+      <td>Outliers</td>
+      <td>Chỉ bảng sort, chỉ line</td>
+      <td>Bảng không thấy correlation; line giấu điểm lệch đa biến</td>
+    </tr>
+  </table>
+  <p>
+    Hạn chế idiom: size kênh yếu hơn position, mưa TB các tỉnh khá gần nhau nên bubble ít phân hóa;
+    scatter 20k điểm vẫn overplot (đã tách màu outlier và dùng opacity). Heatmap dùng tổng mưa tháng
+    nên tháng 31 ngày hơi nặng hơn tháng 28 — tradeoff của aggregation.
+  </p>
+
+  <h3>6.4. Tầng algorithm</h3>
+  <p>
+    JSON ~0,9 MB, vẽ lại khi filter. Threat: máy yếu / không có WebGL làm chậm scatter.
+    Không claim “vis tốt” từ việc load nhanh.
+  </p>
+
+  <h3>6.5. Kết luận đánh giá</h3>
+  <p>
+    Ba idiom khớp ba {action, target} của slide lý thuyết; linked interaction cho phép chuyển
+    summarize → identify mà không đổi dataset. Pattern khí hậu Việt Nam đọc được trên vis,
+    nên nhóm xem thiết kế đạt yêu cầu phân tích–thiết kế. Hướng mở: thêm GeoJSON choropleth đã khớp tên,
+    calendar heatmap theo tỉnh, và user study nhỏ (insight-based evaluation, North).
+  </p>
+
+  <h2>7. Phân công thực hiện</h2>
+  <table>
+    <tr><th>Thành viên</th><th>Phân tích &amp; thiết kế</th><th>Cài đặt trên dashboard</th></tr>
+    <tr>
+      <td>Nguyễn Quốc Trạng</td>
+      <td>Data abstraction không gian; task discover distribution; encoding map/histogram</td>
+      <td>Scattergeo, histogram, KPI, bộ lọc liên kết, khung trang</td>
+    </tr>
+    <tr>
+      <td>Trương Thị Ngọc Viên</td>
+      <td>Task compare trends; chọn line vs heatmap; derive MA 7 ngày</td>
+      <td>Multi-line, heatmap vùng×tháng, overlay tỉnh đang khóa</td>
+    </tr>
+    <tr>
+      <td>Phạm Quốc Vương</td>
+      <td>Task locate outliers; IQR + z-score; boxplot địa hình</td>
+      <td>Scattergl, boxplot, bảng 15 outlier, lasso brush</td>
+    </tr>
+  </table>
+
+  <h2>8. Cách chạy dashboard và nộp link</h2>
+  <p>Trong thư mục <code>dashboard</code>:</p>
+  <ol>
+    <li>Cài Node.js (nhóm đã dùng v22).</li>
+    <li>Chạy <code>node serve.js</code>.</li>
+    <li>Mở <a href="http://localhost:5173">http://localhost:5173</a>.</li>
+    <li>
+      Để có link public (dán vào báo cáo nộp): đẩy thư mục <code>dashboard</code> lên GitHub Pages
+      hoặc Netlify Drop. Sau đó thay URL ở đầu báo cáo.
+    </li>
+  </ol>
+  <p>
+    File nguồn: <code>df_weather_fixed_utf8.csv</code> → <code>scripts/prepare-data.js</code> →
+    <code>dashboard/data/weather.json</code> → <code>dashboard/index.html</code>.
+  </p>
+
+  <h2>Tài liệu tham khảo</h2>
+  <ol>
+    <li>Munzner, T. (2014). <em>Visualization Analysis and Design</em>. CRC Press. Chương 2–5 (what / why / how / nested model).</li>
+    <li>Munzner, T. (2009). A Nested Model for Visualization Design and Validation. <em>IEEE TVCG</em> 15(6).</li>
+    <li>Brehmer, M., &amp; Munzner, T. (2013). A Multi-Level Typology of Abstract Visualization Tasks. <em>IEEE TVCG</em> 19(12).</li>
+    <li>Mackinlay, J. (1986). Automating the Design of Graphical Presentations of Relational Information. <em>ACM TOG</em>.</li>
+    <li>Shneiderman, B. (1996). The Eyes Have It: A Task by Data Type Taxonomy for Information Visualizations.</li>
+    <li>Wickham, H., &amp; Stryjewski, L. (2012). 40 years of boxplots.</li>
+  </ol>
+</body>
+</html>

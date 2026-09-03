@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Atlas Khí tượng Việt Nam 2024–2025</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-mark">HTRQD</div>
+    <div class="hero-text">
+      <p class="eyebrow">Bài tập nhóm · Trực quan hóa dữ liệu · Munzner nested model</p>
+      <h1>Atlas khí tượng Việt Nam</h1>
+      <p class="lede">
+        63 tỉnh thành · 21/04/2024 – 04/06/2025 · ba task trừu tượng
+        <em>discover distribution</em>, <em>compare trends</em>, <em>locate outliers</em>
+        được tích hợp trên một dashboard có liên kết tương tác.
+      </p>
+    </div>
+    <div class="hero-meta">
+      <div><span>Nhóm</span> 3 thành viên</div>
+      <div><span>Bảng</span> 26.018 quan sát</div>
+      <div><span>Miền</span> Khí tượng</div>
+    </div>
+  </header>
+
+  <aside class="filters" id="filters">
+    <h2>Bộ lọc liên kết</h2>
+    <p class="hint">Mọi biểu đồ dùng chung bộ lọc này. Click tỉnh trên bản đồ để khóa các view còn lại.</p>
+
+    <label>Từ ngày
+      <input type="date" id="dateFrom" />
+    </label>
+    <label>Đến ngày
+      <input type="date" id="dateTo" />
+    </label>
+
+    <fieldset>
+      <legend>Vùng miền</legend>
+      <div id="regionBox" class="chip-box"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Địa hình</legend>
+      <div id="terrainBox" class="chip-box"></div>
+    </fieldset>
+
+    <label>Thuộc tính màu trên bản đồ
+      <select id="metric">
+        <option value="tavg">Nhiệt độ trung bình (°C)</option>
+        <option value="tmax">Nhiệt độ cao nhất (°C)</option>
+        <option value="precip">Lượng mưa (mm/ngày)</option>
+        <option value="humidity">Độ ẩm (%)</option>
+        <option value="wind">Gió mạnh nhất (km/h)</option>
+      </select>
+    </label>
+
+    <div class="lock" id="lockBox" hidden>
+      <strong id="lockName"></strong>
+      <button type="button" id="btnClearLock">Bỏ chọn tỉnh</button>
+    </div>
+    <button type="button" id="btnReset" class="ghost">Đặt lại toàn bộ</button>
+
+    <section class="members">
+      <h3>Phân công task</h3>
+      <article>
+        <b>25C12012 · Nguyễn Quốc Trạng</b>
+        <span>Discover distribution</span>
+      </article>
+      <article>
+        <b>25C12038 · Trương Thị Ngọc Viên</b>
+        <span>Compare trends</span>
+      </article>
+      <article>
+        <b>25C12039 · Phạm Quốc Vương</b>
+        <span>Locate outliers</span>
+      </article>
+    </section>
+  </aside>
+
+  <main>
+    <section class="kpis" id="kpis"></section>
+
+    <section class="plate" id="task1">
+      <header>
+        <p class="task-tag">Task 1 · Discover distribution</p>
+        <h2>Phân bố không gian nhiệt độ và mưa</h2>
+        <p>Nguyễn Quốc Trạng · Idiom: bivariate proportional symbol map + histogram</p>
+      </header>
+      <div class="split">
+        <div class="plot" id="mapPlot"></div>
+        <div class="plot" id="histPlot"></div>
+      </div>
+      <p class="caption">
+        Vị trí mã hóa tọa độ tỉnh. Màu mã hóa thuộc tính đang chọn. Kích thước mã hóa lượng mưa trung bình.
+        Hình marker mã hóa địa hình. Histogram bên phải tóm tắt phân bố của cùng thuộc tính.
+        Zoom bản đồ đã tắt để khung Việt Nam không bị văng; click tỉnh để lọc các view còn lại.
+      </p>
+    </section>
+
+    <section class="plate" id="task2">
+      <header>
+        <p class="task-tag">Task 2 · Compare trends</p>
+        <h2>So sánh xu hướng theo vùng và theo tháng</h2>
+        <p>Trương Thị Ngọc Viên · Idiom: aligned area/line chart + heatmap</p>
+      </header>
+      <div class="split wide">
+        <div class="plot" id="trendPlot"></div>
+        <div class="plot" id="heatPlot"></div>
+      </div>
+      <p class="caption">
+        Đường đã làm mượt 7 ngày để đọc xu hướng, không bị nhiễu ngày. Heatmap tóm tắt toàn bộ (summarize)
+        theo vùng × tháng. Click một vùng trên chú thích để ẩn/hiện.
+      </p>
+    </section>
+
+    <section class="plate" id="task3">
+      <header>
+        <p class="task-tag">Task 3 · Locate outliers</p>
+        <h2>Định vị ngày cực đoan: mưa lớn và nhiệt độ lệch</h2>
+        <p>Phạm Quốc Vương · Idiom: scatterplot + boxplot (IQR fences)</p>
+      </header>
+      <div class="split">
+        <div class="plot" id="scatterPlot"></div>
+        <div class="plot" id="boxPlot"></div>
+      </div>
+      <div class="table-wrap">
+        <h3>15 quan sát lệch nhất trong bộ lọc hiện tại</h3>
+        <table id="outlierTable">
+          <thead>
+            <tr>
+              <th>Ngày</th><th>Tỉnh</th><th>Vùng</th>
+              <th>T° TB</th><th>Mưa (mm)</th><th>Độ ẩm</th><th>Lý do</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="caption">
+        Outlier mưa: trên hàng rào IQR (Q3 + 1.5×IQR). Outlier nhiệt: |z-score| ≥ 2.5 so với phân bố đang lọc.
+        Kéo chọn (lasso/box) trên scatter để nhấn các tỉnh tương ứng trên bản đồ.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    Dữ liệu: WeatherAPI, tổng hợp theo ngày tại 63 tỉnh Việt Nam.
+    Thiết kế theo Munzner, <em>Visualization Analysis and Design</em> (2014).
+  </footer>
+
+  <script src="js/plotly.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
